@@ -303,6 +303,39 @@ function handleKeydown(event) {
 
 function setupEvents() {
   document.addEventListener('keydown', handleKeydown);
+  setupSwipes();
+}
+
+/** Свайпы на мобильных устройствах. */
+function setupSwipes() {
+  const MIN_DISTANCE = 30;
+  let start = null;
+
+  ui.board.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1) return;
+    start = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+  }, { passive: true });
+
+  // не даём странице прокручиваться во время свайпа по полю
+  ui.board.addEventListener('touchmove', (event) => {
+    if (start) event.preventDefault();
+  }, { passive: false });
+
+  ui.board.addEventListener('touchend', (event) => {
+    if (!start) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    start = null;
+
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < MIN_DISTANCE) return;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      move(dx > 0 ? 'right' : 'left');
+    } else {
+      move(dy > 0 ? 'down' : 'up');
+    }
+  });
 }
 
 /* ---------- Старт ---------- */
