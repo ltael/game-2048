@@ -7,7 +7,10 @@
    ========================================================= */
 
 const SIZE = 4;
-const MOVE_TIME = 120; // длительность сдвига плитки, мс (как в CSS)
+const MOVE_TIME = 120;
+const GAME_KEY = '2048:game';
+const BEST_KEY = '2048:best';
+ // длительность сдвига плитки, мс (как в CSS)
 
 /* ---------- Ссылки на элементы ---------- */
 
@@ -166,7 +169,9 @@ function newGame() {
   renderAll('new');
   renderScore();
   renderControls();
+  saveGame();
 }
+
 
 /* ---------- Ходы ---------- */
 
@@ -294,6 +299,8 @@ function move(direction) {
   }
 
   renderControls();
+  saveGame();
+
 }
 
 /* ---------- Управление ---------- */
@@ -415,6 +422,46 @@ function undo() {
   renderAll();
   renderScore();
   renderControls();
+  saveGame();
+}
+
+
+/* ---------- localStorage ---------- */
+
+function isValidCells(cells) {
+  return Array.isArray(cells)
+    && cells.length === SIZE
+    && cells.every((row) => Array.isArray(row)
+      && row.length === SIZE
+      && row.every((v) => Number.isInteger(v) && v >= 0));
+}
+
+function saveGame() {
+  const data = { cells: toCells(grid), score, prev, over, saved };
+  try {
+    localStorage.setItem(GAME_KEY, JSON.stringify(data));
+    localStorage.setItem(BEST_KEY, String(best));
+  } catch (error) {
+    console.warn('Не удалось сохранить игру', error);
+  }
+}
+
+function loadGame() {
+  try {
+    best = Number(localStorage.getItem(BEST_KEY)) || 0;
+    const data = JSON.parse(localStorage.getItem(GAME_KEY));
+    if (!data || !isValidCells(data.cells)) return false;
+
+    grid = fromCells(data.cells);
+    score = Number(data.score) || 0;
+    prev = data.prev && isValidCells(data.prev.cells) ? data.prev : null;
+    over = Boolean(data.over);
+    saved = Boolean(data.saved);
+    best = Math.max(best, score);
+    return emptyPositions().length < SIZE * SIZE; // пустое поле — начинаем заново
+  } catch {
+    return false;
+  }
 }
 
 /* ---------- Старт ---------- */
@@ -422,7 +469,17 @@ function undo() {
 function init() {
   buildBoard();
   setupEvents();
-  newGame();
+
+  if (loadGame()) {
+    // продолжаем сохранённую игру
+    renderAll();
+    renderScore();
+    renderControls();
+    if (over) showGameOver();
+  } else {
+    newGame();
+  }
 }
+
 
 init();
