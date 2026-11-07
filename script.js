@@ -10,6 +10,9 @@ const SIZE = 4;
 const MOVE_TIME = 120;
 const GAME_KEY = '2048:game';
 const BEST_KEY = '2048:best';
+const LEADERS_KEY = '2048:leaders';
+const NAME_KEY = '2048:name';
+
  // длительность сдвига плитки, мс (как в CSS)
 
 /* ---------- Ссылки на элементы ---------- */
@@ -328,7 +331,23 @@ function setupEvents() {
   ui.undoBtn.addEventListener('click', undo);
   ui.restartBtn.addEventListener('click', newGame);
   ui.overRestartBtn.addEventListener('click', newGame);
+  ui.leadersBtn.addEventListener('click', openLeaders);
+  ui.overLeadersBtn.addEventListener('click', openLeaders);
+  ui.leadersClose.addEventListener('click', closeLeaders);
+
+  // закрытие по клику на затемнённый фон
+  ui.leaders.addEventListener('click', (event) => {
+    if (event.target === ui.leaders) closeLeaders();
+  });
+  ui.leaders.addEventListener('close', () => {
+    document.body.classList.remove('is-leaders');
+    lastSavedId = null;
+  });
+
+  ui.saveForm.addEventListener('submit', handleSave);
+  ui.nameInput.addEventListener('input', () => ui.nameInput.setCustomValidity(''));
 }
+
 
 /** Свайпы на мобильных устройствах. */
 function setupSwipes() {
@@ -395,12 +414,22 @@ function canMove() {
 }
 
 function showGameOver() {
-  ui.gameOverTitle.textContent = 'Ходов больше нет';
+  ui.gameOverTitle.textContent = saved ? 'Ваш рекорд сохранён' : 'Ходов больше нет';
   ui.gameOverText.textContent = `Ваш счёт: ${score}`;
-  ui.saveForm.hidden = true; // форму сохранения подключим на этапе с рекордами
+  ui.saveForm.hidden = saved;
   ui.gameOver.hidden = false;
   document.body.classList.add('is-over');
+
+  if (!saved) {
+    try {
+      ui.nameInput.value = localStorage.getItem(NAME_KEY) || '';
+    } catch {
+      ui.nameInput.value = '';
+    }
+    ui.nameInput.focus();
+  }
 }
+
 
 function hideGameOver() {
   ui.gameOver.hidden = true;
@@ -462,6 +491,109 @@ function loadGame() {
   } catch {
     return false;
   }
+}
+
+/* ---------- Рекорды ---------- */
+
+function loadLeaders() {
+  try {
+    const data = JSON.parse(localStorage.getItem(LEADERS_KEY));
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLeaders(list) {
+  try {
+    localStorage.setItem(LEADERS_KEY, JSON.stringify(list));
+  } catch (error) {
+    console.warn('Не удалось сохранить таблицу рекордов', error);
+  }
+}
+
+function handleSave(event) {
+  event.preventDefault();
+  const name = ui.nameInput.value.trim();
+
+  if (!name) {
+    ui.nameInput.setCustomValidity('Введите имя, чтобы сохранить рекорд');
+    ui.nameInput.reportValidity();
+    return;
+  }
+
+  const record = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name,
+    score,
+    date: new Date().toISOString(),
+  };
+
+  const leaders = [...loadLeaders(), record]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10); // храним только топ-10
+  saveLeaders(leaders);
+
+  try {
+    localStorage.setItem(NAME_KEY, name);
+  } catch {
+    /* не критично */
+  }
+
+  saved = true;
+  lastSavedId = record.id;
+  saveGame();
+
+  // инпут скрывается, сообщение меняется
+  ui.saveForm.hidden = true;
+  ui.gameOverTitle.textContent = 'Ваш рекорд сохранён';
+  ui.overRestartBtn.focus();
+}
+
+function formatDate(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function renderLeaders() {
+  const leaders = loadLeaders();
+
+  const rows = leaders.map((record, index) => {
+    const row = el('tr');
+    if (record.id === lastSavedId) row.classList.add('is-new');
+
+    const place = el('td', 'place', String(index + 1));
+    const name = el('td', 'name', record.name);
+    const points = el('td', 'num', String(record.score));
+    const date = el('td', 'date');
+    const time = el('time', '', formatDate(record.date));
+    time.dateTime = record.date;
+    date.append(time);
+
+    row.append(place, name, points, date);
+    return row;
+  });
+
+  ui.leadersBody.replaceChildren(...rows);
+  ui.leadersTable.hidden = leaders.length === 0;
+  ui.leadersEmpty.hidden = leaders.length > 0;
+}
+
+function openLeaders() {
+  renderLeaders();
+  ui.leaders.showModal();
+  document.body.classList.add('is-leaders');
+}
+
+function closeLeaders() {
+  ui.leaders.close();
 }
 
 /* ---------- Старт ---------- */
