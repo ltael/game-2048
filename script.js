@@ -163,11 +163,153 @@ function newGame() {
   spawnTiles(randomInt(1, 3)); // в начале игры 1–3 плитки
   renderAll('new');
 }
+/* ---------- Ходы ---------- */
+
+/**
+ * Список координат линий для направления.
+ * Каждая линия идёт от края, к которому сдвигаем плитки.
+ */
+function getLines(direction) {
+  const lines = [];
+  for (let i = 0; i < SIZE; i++) {
+    const line = [];
+    for (let j = 0; j < SIZE; j++) {
+      if (direction === 'left') line.push({ x: j, y: i });
+      if (direction === 'right') line.push({ x: SIZE - 1 - j, y: i });
+      if (direction === 'up') line.push({ x: i, y: j });
+      if (direction === 'down') line.push({ x: i, y: SIZE - 1 - j });
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/**
+ * Слияние одной линии по правилам из задания:
+ * плитки сливаются, пока есть одинаковые соседи.
+ *   [4, 4, 4, 4]   -> [16]    (+8, +8, +16 = 32)
+ *   [16, 16, 2, 2] -> [32, 4] (+32, +4 = 36)
+ *   [2, 2, 2, 2]   -> [8]     (+4, +4, +8 = 16)
+ * Каждый элемент хранит список исходных плиток (sources) для анимации.
+ */
+function mergeLine(tiles) {
+  let items = tiles.map((tile) => ({ value: tile.value, sources: [tile] }));
+  let gained = 0;
+  let mergedSomething = true;
+
+  while (mergedSomething) {
+    mergedSomething = false;
+    const result = [];
+    for (let k = 0; k < items.length; k++) {
+      const current = items[k];
+      const next = items[k + 1];
+      if (next && current.value === next.value) {
+        const value = current.value * 2;
+        result.push({ value, sources: [...current.sources, ...next.sources] });
+        gained += value;
+        k++;
+        mergedSomething = true;
+      } else {
+        result.push(current);
+      }
+    }
+    items = result;
+  }
+
+  return { items, gained };
+}
+
+function move(direction) {
+  if (over || ui.leaders.open) return;
+
+  const before = { cells: toCells(grid), score };
+  const newGrid = emptyGrid();
+  const moves = [];   // { tile, x, y } — плитка просто едет
+  const merges = [];  // { sources, result } — плитки слились в новую
+  let gained = 0;
+  let changed = false;
+
+  for (const line of getLines(direction)) {
+    const tiles = line.map(({ x, y }) => grid[y][x]).filter(Boolean);
+    const { items, gained: lineGain } = mergeLine(tiles);
+    gained += lineGain;
+
+    items.forEach((item, index) => {
+      const { x, y } = line[index];
+      if (item.sources.length === 1) {
+        const tile = item.sources[0];
+        if (tile.x !== x || tile.y !== y) changed = true;
+        newGrid[y][x] = tile;
+        moves.push({ tile, x, y });
+      } else {
+        const result = createTile(item.value, x, y);
+        newGrid[y][x] = result;
+        merges.push({ sources: item.sources, result });
+        changed = true;
+      }
+    });
+  }
+
+  if (!changed) return; // ход ничего не изменил — новых плиток нет
+
+  flushRemovals();
+  prev = before;
+  grid = newGrid;
+  score += gained;
+  best = Math.max(best, score);
+
+  // 1. Плитки едут на новые места
+  for (const { tile, x, y } of moves) {
+    tile.x = x;
+    tile.y = y;
+    placeElement(tileElements.get(tile.id), x, y);
+  }
+
+  // 2. Слившиеся плитки едут в точку слияния и исчезают, на их месте появляется новая
+  for (const { sources, result } of merges) {
+    for (const source of sources) {
+      const node = tileElements.get(source.id);
+      tileElements.delete(source.id);
+      if (!node) continue;
+      placeElement(node, result.x, result.y);
+      node.classList.add('tile--leaving');
+      const timer = setTimeout(() => node.remove(), MOVE_TIME);
+      pendingRemovals.push({ node, timer });
+    }
+    createTileElement(result, 'merged');
+  }
+
+  // 3. Появляются 1–2 новые плитки
+  spawnTiles(randomInt(1, 2)).forEach((tile) => createTileElement(tile, 'new'));
+}
+
+/* ---------- Управление ---------- */
+
+const KEY_DIRECTIONS = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+};
+
+function handleKeydown(event) {
+  const direction = KEY_DIRECTIONS[event.key];
+  if (!direction) return;
+  if (event.target instanceof HTMLInputElement) return; // печатают имя
+  if (ui.leaders.open) return;
+  event.preventDefault(); // чтобы страница не прокручивалась
+  move(direction);
+}
+
+function setupEvents() {
+  document.addEventListener('keydown', handleKeydown);
+}
 
 /* ---------- Старт ---------- */
 
 function init() {
   buildBoard();
+  setupEvents();
   newGame();
 }
 
