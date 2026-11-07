@@ -1,0 +1,618 @@
+/* =========================================================
+   2048 · Закат — стили
+   Плитки идут от светлой лаванды через персик и коралл
+   к малиновому, фиолетовому и индиго; 2048 — золотая звезда.
+   ========================================================= */
+
+:root {
+  /* фон и поверхности */
+  --sky: #1f1a3a;
+  --sky-glow: #3d2c66;
+  --board: #2c2552;
+  --cell: #3a3268;
+  --surface: #352d61;
+  --surface-hover: #433a75;
+  --text: #f4eeff;
+  --muted: #b5acd9;
+  --accent: #ff8a73;
+  --on-accent: #241d45;
+  --danger: #ff7a8a;
+
+  /* плитки */
+  --t2: #f4eeff;
+  --t4: #d8c6ff;
+  --t8: #ffd0b0;
+  --t16: #ffab8c;
+  --t32: #ff8a73;
+  --t64: #f5637d;
+  --t128: #dd4a9b;
+  --t256: #b24bc4;
+  --t512: #8754d8;
+  --t1024: #5a60e2;
+  --t2048: #ffc94d;
+  --ink-dark: #2b2350;
+
+  --gap: 12px;
+  --radius-board: 22px;
+  --radius-tile: 14px;
+  --move-time: 120ms;
+
+  --font: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 70% at 50% -10%, var(--sky-glow) 0%, transparent 60%),
+    var(--sky);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--t2048);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Каркас ---------- */
+
+.app {
+  width: min(100%, 500px);
+  margin: 0 auto;
+  padding: clamp(16px, 5vw, 48px) 16px 32px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Логотип: каждая цифра — цвет своей плитки */
+.logo {
+  margin: 0;
+  font-size: clamp(3rem, 15vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.logo__digit--2 { color: var(--t2); }
+.logo__digit--0 { color: var(--t32); }
+.logo__digit--4 { color: var(--t128); }
+.logo__digit--8 { color: var(--t2048); }
+
+.scores {
+  display: flex;
+  gap: 8px;
+}
+
+.score {
+  position: relative;
+  min-width: 84px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.score__label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.score__value {
+  display: block;
+  font-size: 1.375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* «+36» всплывает над счётом */
+.score__gain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.score__gain-item {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  color: var(--t2048);
+  font-weight: 800;
+  animation: gain-float 700ms ease-out forwards;
+}
+
+@keyframes gain-float {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+/* ---------- Кнопки ---------- */
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0 16px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 0;
+  border-radius: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.actions .btn {
+  flex: 1;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn__icon {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.btn--accent {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn--accent:hover:not(:disabled) {
+  background: var(--t16);
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--surface);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--surface-hover);
+}
+
+/* ---------- Игровое поле ---------- */
+
+.board-wrap {
+  position: relative;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap);
+  padding: var(--gap);
+  aspect-ratio: 1;
+  background: var(--board);
+  border-radius: var(--radius-board);
+  box-shadow: 0 24px 60px -20px rgba(10, 6, 30, 0.8);
+  container-type: inline-size;
+  touch-action: none; /* свайпы не прокручивают страницу */
+  user-select: none;
+}
+
+.cell {
+  background: var(--cell);
+  border-radius: var(--radius-tile);
+}
+
+.tile-layer {
+  position: absolute;
+  inset: var(--gap);
+}
+
+/* Плитка: внешний блок отвечает за положение, внутренний — за вид и «пульс» */
+.tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc((100% - 3 * var(--gap)) / 4);
+  height: calc((100% - 3 * var(--gap)) / 4);
+  transform:
+    translate(
+      calc(var(--x) * (100% + var(--gap))),
+      calc(var(--y) * (100% + var(--gap)))
+    );
+  transition: transform var(--move-time) ease-in-out;
+  z-index: 2;
+}
+
+.tile__inner {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--tile-bg, var(--t2));
+  color: var(--tile-ink, #ffffff);
+  border-radius: var(--radius-tile);
+  font-size: 12cqw;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  box-shadow: var(--tile-glow, none);
+}
+
+.tile[data-digits='3'] .tile__inner { font-size: 9.5cqw; }
+.tile[data-digits='4'] .tile__inner { font-size: 7.5cqw; }
+.tile[data-digits='5'] .tile__inner,
+.tile[data-digits='6'] .tile__inner { font-size: 6cqw; }
+
+/* Цвет у каждого значения свой */
+.tile[data-value='2']    { --tile-bg: var(--t2);    --tile-ink: var(--ink-dark); }
+.tile[data-value='4']    { --tile-bg: var(--t4);    --tile-ink: var(--ink-dark); }
+.tile[data-value='8']    { --tile-bg: var(--t8);    --tile-ink: var(--ink-dark); }
+.tile[data-value='16']   { --tile-bg: var(--t16);   --tile-ink: var(--ink-dark); }
+.tile[data-value='32']   { --tile-bg: var(--t32);   --tile-ink: var(--ink-dark); }
+.tile[data-value='64']   { --tile-bg: var(--t64); }
+.tile[data-value='128']  { --tile-bg: var(--t128);  --tile-glow: 0 0 18px -4px var(--t128); }
+.tile[data-value='256']  { --tile-bg: var(--t256);  --tile-glow: 0 0 20px -4px var(--t256); }
+.tile[data-value='512']  { --tile-bg: var(--t512);  --tile-glow: 0 0 22px -4px var(--t512); }
+.tile[data-value='1024'] { --tile-bg: var(--t1024); --tile-glow: 0 0 26px -4px var(--t1024); }
+.tile[data-value='2048'] {
+  --tile-bg: radial-gradient(circle at 35% 30%, #fff1c2, var(--t2048) 60%, #f2a52b);
+  --tile-ink: var(--ink-dark);
+  --tile-glow: 0 0 32px 2px rgba(255, 201, 77, 0.65);
+}
+.tile[data-value='super'] {
+  --tile-bg: #120e26;
+  --tile-ink: var(--t2048);
+  --tile-glow: inset 0 0 0 3px var(--t2048), 0 0 28px -2px rgba(255, 201, 77, 0.6);
+}
+
+/* Анимации: появление новой плитки и «пульс» при слиянии — после сдвига */
+.tile--new .tile__inner {
+  animation: tile-appear 180ms ease-out var(--move-time) backwards;
+}
+
+.tile--merged {
+  z-index: 3;
+}
+
+.tile--merged .tile__inner {
+  animation: tile-pop 220ms ease-out var(--move-time) backwards;
+}
+
+.tile--leaving {
+  z-index: 1;
+}
+
+@keyframes tile-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+@keyframes tile-pop {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Конец игры ---------- */
+
+.game-over {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: rgba(31, 26, 58, 0.93);
+  backdrop-filter: blur(4px);
+  border-radius: var(--radius-board);
+  text-align: center;
+  animation: fade-in 300ms ease-out;
+}
+
+.game-over__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 7vw, 2rem);
+  font-weight: 800;
+}
+
+.game-over__text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.125rem;
+}
+
+.save-form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 8px;
+}
+
+.field {
+  flex: 1 1 160px;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--cell);
+  border: 2px solid transparent;
+  border-radius: 12px;
+}
+
+.field::placeholder {
+  color: var(--muted);
+}
+
+.field:focus-visible {
+  outline: none;
+  border-color: var(--t2048);
+}
+
+.game-over__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Подсказки по управлению ---------- */
+
+.hint {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.hint--touch {
+  display: none;
+}
+
+/* Сенсорные устройства: вместо подсказки про клавиатуру — про свайпы */
+@media (hover: none) and (pointer: coarse) {
+  .hint--keys {
+    display: none;
+  }
+
+  .hint--touch {
+    display: block;
+  }
+
+  /* во время просмотра рекордов и сохранения результата подсказки скрыты */
+  .is-over .hint--touch,
+  .is-leaders .hint--touch {
+    display: none;
+  }
+}
+
+/* ---------- Таблица рекордов ---------- */
+
+.leaders {
+  width: min(560px, calc(100% - 24px));
+  max-height: calc(100vh - 48px);
+  padding: 20px;
+  background: var(--board);
+  color: var(--text);
+  border: 0;
+  border-radius: var(--radius-board);
+}
+
+.leaders::backdrop {
+  background: rgba(15, 11, 34, 0.7);
+  backdrop-filter: blur(3px);
+}
+
+.leaders[open] {
+  animation: fade-in 200ms ease-out;
+}
+
+.leaders__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.leaders__title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 800;
+}
+
+.leaders__scroll {
+  overflow-x: auto;
+}
+
+.leaders__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.leaders__table th,
+.leaders__table td {
+  padding: 10px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.leaders__table th {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-bottom: 2px solid var(--cell);
+}
+
+.leaders__table td {
+  border-bottom: 1px solid var(--cell);
+}
+
+.leaders__table .num {
+  text-align: right;
+}
+
+.leaders__table td.num {
+  font-weight: 800;
+}
+
+.leaders__table .name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaders__table .date {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.leaders__table .place {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* три первых места — цвета верхних плиток */
+.leaders__table tr:nth-child(1) .place { color: var(--t2048); }
+.leaders__table tr:nth-child(2) .place { color: var(--t4); }
+.leaders__table tr:nth-child(3) .place { color: var(--t16); }
+
+.leaders__table tr.is-new td {
+  background: rgba(255, 201, 77, 0.12);
+}
+
+.leaders__empty {
+  margin: 8px 0 4px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- Адаптивность ---------- */
+
+@media (max-width: 480px) {
+  :root {
+    --gap: 8px;
+    --radius-board: 16px;
+    --radius-tile: 10px;
+  }
+
+  .score {
+    min-width: 70px;
+    padding: 6px 10px;
+  }
+
+  .score__value {
+    font-size: 1.125rem;
+  }
+
+  .actions .btn {
+    padding: 10px 6px;
+    gap: 4px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .leaders {
+    padding: 16px 12px;
+  }
+
+  .leaders__table th,
+  .leaders__table td {
+    padding: 8px 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --move-time: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
