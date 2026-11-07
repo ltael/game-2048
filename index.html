@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2048 · Закат</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <h1 class="logo" aria-label="2048">
+        <span class="logo__digit logo__digit--2">2</span><span class="logo__digit logo__digit--0">0</span><span class="logo__digit logo__digit--4">4</span><span class="logo__digit logo__digit--8">8</span>
+      </h1>
+
+      <div class="scores">
+        <div class="score">
+          <span class="score__label">Счёт</span>
+          <output class="score__value" id="score">0</output>
+          <span class="score__gain" id="score-gain" aria-hidden="true"></span>
+        </div>
+        <div class="score">
+          <span class="score__label">Лучший</span>
+          <output class="score__value" id="best">0</output>
+        </div>
+      </div>
+    </header>
+
+    <nav class="actions" aria-label="Действия">
+      <button class="btn" type="button" id="undo-btn">
+        <span class="btn__icon" aria-hidden="true">↶</span> Ход назад
+      </button>
+      <button class="btn" type="button" id="restart-btn">
+        <span class="btn__icon" aria-hidden="true">↻</span> Заново
+      </button>
+      <button class="btn" type="button" id="leaders-btn">Рекорды</button>
+    </nav>
+
+    <main>
+      <section class="board-wrap" aria-label="Игровое поле">
+        <div class="board" id="board"></div>
+
+        <div class="game-over" id="game-over" hidden>
+          <h2 class="game-over__title" id="game-over-title">Ходов больше нет</h2>
+          <p class="game-over__text" id="game-over-text"></p>
+
+          <form class="save-form" id="save-form" novalidate>
+            <label class="visually-hidden" for="player-name">Ваше имя</label>
+            <input class="field" id="player-name" type="text" maxlength="20"
+                   autocomplete="nickname" placeholder="Ваше имя">
+            <button class="btn btn--accent" type="submit">Сохранить результат</button>
+          </form>
+
+          <div class="game-over__actions">
+            <button class="btn" type="button" id="over-restart-btn">
+              <span class="btn__icon" aria-hidden="true">↻</span> Начать заново
+            </button>
+            <button class="btn" type="button" id="over-leaders-btn">Рекорды</button>
+          </div>
+        </div>
+      </section>
+
+      <p class="hint hint--keys">Управление: стрелки на клавиатуре</p>
+      <p class="hint hint--touch">Проведите пальцем по полю</p>
+    </main>
+
+    <dialog class="leaders" id="leaders" aria-labelledby="leaders-title">
+      <div class="leaders__head">
+        <h2 class="leaders__title" id="leaders-title">Таблица рекордов</h2>
+        <button class="icon-btn" type="button" id="leaders-close" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="leaders__scroll">
+        <table class="leaders__table" id="leaders-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Имя</th>
+              <th scope="col" class="num">Очки</th>
+              <th scope="col">Дата</th>
+            </tr>
+          </thead>
+          <tbody id="leaders-body"></tbody>
+        </table>
+      </div>
+      <p class="leaders__empty" id="leaders-empty">Рекордов пока нет. Закончите игру и сохраните результат.</p>
+    </dialog>
+  </div>
+</body>
+</html>
