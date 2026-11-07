@@ -161,8 +161,11 @@ function newGame() {
   over = false;
   saved = false;
   spawnTiles(randomInt(1, 3)); // в начале игры 1–3 плитки
+
+  hideGameOver();
   renderAll('new');
   renderScore();
+  renderControls();
 }
 
 /* ---------- Ходы ---------- */
@@ -284,6 +287,13 @@ function move(direction) {
   // 3. Появляются 1–2 новые плитки
   spawnTiles(randomInt(1, 2)).forEach((tile) => createTileElement(tile, 'new'));
   renderScore(gained);
+
+  if (!canMove()) {
+    over = true;
+    setTimeout(showGameOver, MOVE_TIME * 3);
+  }
+
+  renderControls();
 }
 
 /* ---------- Управление ---------- */
@@ -307,6 +317,10 @@ function handleKeydown(event) {
 function setupEvents() {
   document.addEventListener('keydown', handleKeydown);
   setupSwipes();
+
+  ui.undoBtn.addEventListener('click', undo);
+  ui.restartBtn.addEventListener('click', newGame);
+  ui.overRestartBtn.addEventListener('click', newGame);
 }
 
 /** Свайпы на мобильных устройствах. */
@@ -353,6 +367,54 @@ function renderScore(gained = 0) {
     gain.addEventListener('animationend', () => gain.remove());
     ui.scoreGain.append(gain);
   }
+}
+
+/* ---------- Конец игры ---------- */
+
+/** Ход возможен, если есть пустая клетка или одинаковые соседи. */
+function canMove() {
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const tile = grid[y][x];
+      if (!tile) return true;
+      const right = x + 1 < SIZE ? grid[y][x + 1] : null;
+      const down = y + 1 < SIZE ? grid[y + 1][x] : null;
+      if ((right && right.value === tile.value) || (down && down.value === tile.value)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function showGameOver() {
+  ui.gameOverTitle.textContent = 'Ходов больше нет';
+  ui.gameOverText.textContent = `Ваш счёт: ${score}`;
+  ui.saveForm.hidden = true; // форму сохранения подключим на этапе с рекордами
+  ui.gameOver.hidden = false;
+  document.body.classList.add('is-over');
+}
+
+function hideGameOver() {
+  ui.gameOver.hidden = true;
+  document.body.classList.remove('is-over');
+  ui.nameInput.setCustomValidity('');
+}
+
+/* ---------- Отмена хода ---------- */
+
+function renderControls() {
+  ui.undoBtn.disabled = !prev || over;
+}
+
+function undo() {
+  if (!prev || over) return;
+  grid = fromCells(prev.cells);
+  score = prev.score;
+  prev = null;
+  renderAll();
+  renderScore();
+  renderControls();
 }
 
 /* ---------- Старт ---------- */
