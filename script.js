@@ -162,7 +162,9 @@ function newGame() {
   saved = false;
   spawnTiles(randomInt(1, 3)); // в начале игры 1–3 плитки
   renderAll('new');
+  renderScore();
 }
+
 /* ---------- Ходы ---------- */
 
 /**
@@ -281,6 +283,7 @@ function move(direction) {
 
   // 3. Появляются 1–2 новые плитки
   spawnTiles(randomInt(1, 2)).forEach((tile) => createTileElement(tile, 'new'));
+  renderScore(gained);
 }
 
 /* ---------- Управление ---------- */
@@ -336,6 +339,20 @@ function setupSwipes() {
       move(dy > 0 ? 'down' : 'up');
     }
   });
+}
+
+/* ---------- Счёт ---------- */
+
+function renderScore(gained = 0) {
+  ui.score.textContent = score;
+  ui.best.textContent = best;
+
+  if (gained > 0) {
+    // всплывающее «+N» над счётом
+    const gain = el('span', 'score__gain-item', `+${gained}`);
+    gain.addEventListener('animationend', () => gain.remove());
+    ui.scoreGain.append(gain);
+  }
 }
 
 /* ---------- Старт ---------- */
